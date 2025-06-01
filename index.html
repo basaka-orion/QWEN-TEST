@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive 3D Cube in Space</title>
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        background-color: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        perspective: 1000px; /* For 3D effect on children */
+        cursor: grab;
+    }
+
+    .space-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200%;
+        height: 200%;
+        transform: rotate(20deg);
+        background-image:
+            radial-gradient(ellipse at 20% 20%, rgba(100, 100, 255, 0.5) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 30%, rgba(200, 100, 255, 0.4) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 80%, rgba(255, 150, 100, 0.3) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 70%, rgba(150, 200, 255, 0.4) 0%, transparent 40%);
+        background-color: #02001a;
+        animation: rotateSpace 120s linear infinite;
+    }
+
+    @keyframes rotateSpace {
+        from { transform: rotate(0deg) scale(1.2); }
+        to { transform: rotate(360deg) scale(1.2); }
+    }
+
+    .stars {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .star {
+        position: absolute;
+        background-color: white;
+        border-radius: 50%;
+        animation: twinkle 2s infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .scene {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        transform-style: preserve-3d;
+        transform: rotateX(-20deg) rotateY(-30deg);
+        box-shadow: 0 0 20px rgba(0,255,255,0.3), 0 0 50px rgba(255,0,255,0.2);
+        animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: rotateX(-20deg) rotateY(-30deg) scale(1); }
+        50% { transform: rotateX(-15deg) rotateY(-25deg) scale(1.05); }
+    }
+
+    .cube {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform-style: preserve-3d;
+        transition: transform 0.05s linear;
+        background: linear-gradient(45deg, 
+            rgba(0,255,255,0.1) 0%,
+            rgba(255,0,255,0.1) 100%);
+        background-size: 400% 400%;
+        animation: gradientMove 15s ease infinite;
+    }
+
+    @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .face {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background-color: rgba(50, 55, 70, 0.85);
+        border: 1px solid rgba(150, 160, 180, 0.7);
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        color: white;
+        font-size: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-image: linear-gradient(45deg, 
+            rgba(0,255,255,0.15) 0%,
+            rgba(255,0,255,0.15) 100%),
+            radial-gradient(ellipse at center, 
+            rgba(255,255,255,0.05) 0%, 
+            rgba(0,0,0,0.05) 80%);
+        background-blend-mode: overlay;
+        animation: faceGlow 5s ease-in-out infinite alternate;
+    }
+
+    @keyframes faceGlow {
+        0% { box-shadow: inset 0 0 10px rgba(0,255,255,0.2), 0 0 10px rgba(255,0,255,0.1); }
+        100% { box-shadow: inset 0 0 20px rgba(0,255,255,0.3), 0 0 20px rgba(255,0,255,0.2); }
+    }
+    /* The "notches" in the video are hard to replicate easily.
+       We can simulate an edgier look with slightly smaller faces and a visible cube background,
+       or by styling the borders. The current border provides some edge definition.
+       For actual notches, clip-path or more complex geometry would be needed. */
+
+    .front  { transform: rotateY(  0deg) translateZ(100px); }
+    .back   { transform: rotateY(180deg) translateZ(100px); }
+    .right  { transform: rotateY( 90deg) translateZ(100px); }
+    .left   { transform: rotateY(-90deg) translateZ(100px); }
+    .top    { transform: rotateX( 90deg) translateZ(100px); }
+    .bottom { transform: rotateX(-90deg) translateZ(100px); }
+
+    .quantum {
+        position: absolute;
+        width: 200%;
+        height: 200%;
+        top: -50%;
+        left: -50%;
+        background: transparent;
+        animation: quantumPulse 6s ease-in-out infinite;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    @keyframes quantumPulse {
+        0% { transform: scale(1) rotate(0deg); opacity: 0.3; }
+        50% { transform: scale(1.5) rotate(180deg); opacity: 0.1; }
+        100% { transform: scale(1) rotate(360deg); opacity: 0.3; }
+    }
+
+    .quantum::before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(circle, 
+            rgba(0,255,255,0.2) 0%,
+            rgba(255,0,255,0.1) 40%,
+            transparent 70%);
+    }
+
+    .quantum-trail {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: rgba(0,255,255,0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        animation: trailMove 2s linear infinite;
+    }
+
+    @keyframes trailMove {
+        0% { transform: translate(0,0) scale(1); opacity: 1; }
+        100% { transform: translate(200px, -150px) scale(0.5); opacity: 0; }
+    }
+</style>
+</head>
+<body>
+
+<div class="space-background"></div>
+<div class="stars" id="stars-container"></div>
+<div class="quantum" id="quantum-container"></div>
+
+<div class="scene" id="scene">
+    <div class="cube" id="cube">
+        <div class="face front"></div>
+        <div class="face back"></div>
+        <div class="face right"></div>
+        <div class="face left"></div>
+        <div class="face top"></div>
+        <div class="face bottom"></div>
+    </div>
+</div>
+
+<script>
+    const scene = document.getElementById('scene');
+    const cube = document.getElementById('cube');
+    const starsContainer = document.getElementById('stars-container');
+
+    let rotateX = -20;
+    let rotateY = -30;
+    let isDragging = false;
+    let previousMouseX = 0;
+    let previousMouseY = 0;
+    const quantumContainer = document.getElementById('quantum-container');
+
+    function createQuantumTrail() {
+        const trail = document.createElement('div');
+        trail.className = 'quantum-trail';
+        trail.style.left = `${Math.random() * 100}%`;
+        trail.style.top = `${Math.random() * 100}%`;
+        trail.style.animationDelay = `${Math.random() * 2}s`;
+        quantumContainer.appendChild(trail);
+
+        trail.style.background = `radial-gradient(circle, 
+            rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.5) 0%,
+            rgba(0,255,255,0) 70%)`;
+
+        setTimeout(() => trail.remove(), 2000);
+    }
+
+    setInterval(createQuantumTrail, 300);
+
+    const numStars = 150;
+    for (let i = 0; i < numStars; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        const size = Math.random() * 3 + 0.5; // Star size between 0.5px and 3.5px
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.animationDelay = `${Math.random() * 2}s`; // Randomize twinkle start
+        star.style.opacity = `${Math.random() * 0.5 + 0.2}`; // Initial random opacity
+        starsContainer.appendChild(star);
+    }
+
+    document.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        document.body.style.cursor = 'grabbing';
+        previousMouseX = e.clientX;
+        previousMouseY = e.clientY;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const deltaX = e.clientX - previousMouseX;
+        const deltaY = e.clientY - previousMouseY;
+
+        rotateY += deltaX * 0.5; // Adjust sensitivity
+        rotateX -= deltaY * 0.5; // Adjust sensitivity (inverted for natural feel)
+
+        // Clamp rotateX to avoid flipping upside down too much, if desired
+        // rotateX = Math.max(-90, Math.min(90, rotateX));
+
+        cube.style.transform = `rotateX(${rotateX + Math.sin(Date.now()/1000)*5}deg) rotateY(${rotateY + Math.cos(Date.now()/1000)*5}deg)`;
+
+        previousMouseX = e.clientX;
+        previousMouseY = e.clientY;
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        document.body.style.cursor = 'grab';
+    });
+
+    document.addEventListener('mouseleave', () => {
+        isDragging = false;
+        document.body.style.cursor = 'grab';
+    });
+
+    document.addEventListener('click', () => {
+        const shockwave = document.createElement('div');
+        shockwave.className = 'shockwave';
+        shockwave.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            animation: shockwaveAnim 1s ease-out;
+            pointer-events: none;
+            z-index: 10;
+        `;
+        document.body.appendChild(shockwave);
+        setTimeout(() => shockwave.remove(), 1000);
+    });
+
+    document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomFactor = Math.exp(-e.deltaY * 0.001);
+        scene.style.transform = `scale(${zoomFactor})`;
+        const glow = document.createElement('div');
+        glow.className = 'shockwave';
+        glow.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                rgba(0,255,255,0.1) 0%,
+                rgba(255,0,255,0.1) 40%,
+                transparent 70%);
+            animation: shockwaveAnim 0.5s ease-out;
+            pointer-events: none;
+            z-index: 10;
+            transform: scale(0);
+        `;
+        document.body.appendChild(glow);
+        setTimeout(() => glow.remove(), 500);
+    }, { passive: false });
+
+    // Optional: Add touch support for mobile
+    let previousTouchX = 0;
+    let previousTouchY = 0;
+
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            document.body.style.cursor = 'grabbing';
+            previousTouchX = e.touches[0].clientX;
+            previousTouchY = e.touches[0].clientY;
+        }
+    }, { passive: false }); // passive: false to allow preventDefault if needed, though not used here
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        // e.preventDefault(); // Uncomment if you want to prevent page scrolling on touch
+
+        const deltaX = e.touches[0].clientX - previousTouchX;
+        const deltaY = e.touches[0].clientY - previousTouchY;
+
+        rotateY += deltaX * 0.5;
+        rotateX -= deltaY * 0.5;
+
+        cube.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+        previousTouchX = e.touches[0].clientX;
+        previousTouchY = e.touches[0].clientY;
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+        isDragging = false;
+        document.body.style.cursor = 'grab';
+    });
+
+</script>
+
+</body>
+</html>
